@@ -416,6 +416,32 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     update_sync_output_groups(output_groups, "intellij-resolve-go", depset(generated))
     return True
 
+def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+    """Updates Go-specific output groups, returns false if not a recognized Go target."""
+    sources = []
+    generated = []
+
+    if ctx.rule.kind in [
+        "rust_binary",
+        "rust_library,
+    ]:
+        sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
+        generated = [f for f in sources if not f.is_source]
+
+    ide_info["rust_ide_info"] = struct_omit_none(
+#        import_path = import_path,
+#        library_label = library_labels[0] if library_labels else None,
+#        library_labels = library_labels,
+        sources = [artifact_location(f) for f in sources],
+    )
+
+    # TODO(vmax): figure what this stuff means
+    #update_sync_output_groups(output_groups, "intellij-info-go", depset([ide_info_file]))
+    #update_sync_output_groups(output_groups, "intellij-compile-go", compile_files)
+    #update_sync_output_groups(output_groups, "intellij-resolve-go", depset(generated))
+    return False
+
+
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
 
@@ -1103,6 +1129,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
