@@ -416,30 +416,202 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     update_sync_output_groups(output_groups, "intellij-resolve-go", depset(generated))
     return True
 
+
+def _build_cargo_toml(ctx, target, source_files):
+    """Builds the Rust package manifest for the given source files."""
+    output_manifest = ctx.actions.declare_file("Cargo.toml")
+
+    args = ctx.actions.args()
+    args.add("--output-manifest")
+    args.add(output_manifest.path)
+#    args.add_joined(
+#        "--sources",
+#        source_files,
+#        join_with = ":",
+#        map_each = _package_manifest_file_argument,
+#    )
+#    args.use_param_file("@%s")
+#    args.set_param_file_format("multiline")
+
+    crate_summary = _aggregate_crate_summary(target, ctx)
+    args.add("--name")
+    args.add(crate_summary.name)
+
+    ctx.actions.run(
+        inputs = source_files,
+        outputs = [output_manifest],
+        executable = ctx.executable._cargo_toml_builder,
+        arguments = [args],
+        mnemonic = "CargoPackageManifest",
+        progress_message = "Generating Cargo.toml for " + str(target.label),
+    )
+    return output_manifest
+
+
+CrateSummary = provider(
+    fields = {
+        "name": "Crate name",
+        "version": "Crate version",
+        "deps": "Crate dependencies",
+    },
+)
+
+def _aggregate_crate_summary(target, ctx):
+    name = ctx.rule.attr.name
+    for tag in ctx.rule.attr.tags:
+        if tag.startswith("crate-name"):
+            name = tag.split("=")[1]
+    return CrateSummary(
+        name = name,
+        version = ctx.rule.attr.version,
+        deps = [target for target in getattr(ctx.rule.attr, "deps", [])]
+    )
+
+
 def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
-    """Updates Go-specific output groups, returns false if not a recognized Go target."""
+    """Updates Rust-specific output groups, returns false if not a recognized Rust target."""
     sources = []
     generated = []
+    ide_info_files = [ide_info_file]
 
-    if ctx.rule.kind in [
-        "rust_binary",
-        "rust_library,
-    ]:
-        sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
-        generated = [f for f in sources if not f.is_source]
+    if not ctx.rule.kind in ["rust_binary", "rust_library"]:
+        return False
+
+    suffix = "-deps-count.txt"
+    output = ctx.actions.declare_file(target.label.name + suffix)
+    sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
+    generated = [f for f in sources if not f.is_source]
+    count = 0
+    if hasattr(ctx.rule.attr, "deps"):
+        for dep in ctx.rule.attr.deps:
+            count = count + 1
+    ctx.actions.write(
+        output = output,
+        content = str(count)
+    )
+    ide_info_files += [output]
+#        fail((target, ctx.rule.kind, generated))
+#        generated_sources = _collect_generated_go_sources(target)
+#        if not generated_sources:
+#            return False
+#        sources = generated_sources
+#        generated = generated_sources
 
     ide_info["rust_ide_info"] = struct_omit_none(
 #        import_path = import_path,
 #        library_label = library_labels[0] if library_labels else None,
 #        library_labels = library_labels,
         sources = [artifact_location(f) for f in sources],
+        deps_count = artifact_location(output),
     )
 
-    # TODO(vmax): figure what this stuff means
-    #update_sync_output_groups(output_groups, "intellij-info-go", depset([ide_info_file]))
-    #update_sync_output_groups(output_groups, "intellij-compile-go", compile_files)
-    #update_sync_output_groups(output_groups, "intellij-resolve-go", depset(generated))
-    return False
+    compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])
+    compile_files = depset(generated, transitive = [compile_files])
+
+    cargo_toml = _build_cargo_toml(ctx, target, sources)
+    resolve_files = [cargo_toml]
+
+    update_sync_output_groups(output_groups, "intellij-info-rs", depset(ide_info_files))
+    update_sync_output_groups(output_groups, "intellij-compile-rs", compile_files)
+    update_sync_output_groups(output_groups, "intellij-resolve-rs", depset(resolve_files))
+    return True
+
+    """Updates Java-specific output groups, returns false if not a Java target."""
+    java = get_java_provider(target)
+    if not java:
+        return False
+    if hasattr(java, "java_outputs") and java.java_outputs:
+        java_outputs = java.java_outputs
+    elif hasattr(java, "outputs") and java.outputs:
+        java_outputs = java.outputs.jars
+    else:
+        return False
+
+    java_semantics = semantics.java if hasattr(semantics, "java") else None
+    if java_semantics and java_semantics.skip_target(target, ctx):
+        return False
+
+    ide_info_files = []
+    sources = sources_from_target(ctx)
+    jars = [library_artifact(output) for output in java_outputs]
+    class_jars = [output.class_jar for output in java_outputs if output and output.class_jar]
+    output_jars = [jar for output in java_outputs for jar in jars_from_output(output)]
+    resolve_files = output_jars
+    compile_files = class_jars
+
+    gen_jars = []
+    for generated_class_jar, generated_source_jar in _collect_generated_files(java):
+        gen_jars.append(annotation_processing_jars(generated_class_jar, generated_source_jar))
+        resolve_files += [
+            jar
+            for jar in [
+                generated_class_jar,
+                generated_source_jar,
+            ]
+            if jar != None and not jar.is_source
+        ]
+        compile_files += [
+            jar
+            for jar in [generated_class_jar]
+            if jar != None and not jar.is_source
+        ]
+
+    jdeps = None
+    jdeps_file = None
+    if java_semantics and hasattr(java_semantics, "get_filtered_jdeps"):
+        jdeps_file = java_semantics.get_filtered_jdeps(target)
+    if jdeps_file == None and hasattr(java, "outputs") and hasattr(java.outputs, "jdeps") and java.outputs.jdeps:
+        jdeps_file = java.outputs.jdeps
+    if jdeps_file:
+        jdeps = artifact_location(jdeps_file)
+        resolve_files.append(jdeps_file)
+
+    java_sources, gen_java_sources, srcjars = divide_java_sources(ctx)
+
+    if java_semantics:
+        srcjars = java_semantics.filter_source_jars(target, ctx, srcjars)
+
+    package_manifest = None
+    if java_sources:
+        package_manifest = build_java_package_manifest(ctx, target, java_sources, ".java-manifest")
+        ide_info_files += [package_manifest]
+
+    filtered_gen_jar = None
+    if java_sources and (gen_java_sources or srcjars):
+        filtered_gen_jar, filtered_gen_resolve_files = _build_filtered_gen_jar(
+            ctx,
+            target,
+            java_outputs,
+            gen_java_sources,
+            srcjars,
+        )
+        resolve_files += filtered_gen_resolve_files
+
+    java_info = struct_omit_none(
+        filtered_gen_jar = filtered_gen_jar,
+        generated_jars = gen_jars,
+        jars = jars,
+        jdeps = jdeps,
+        main_class = getattr(ctx.rule.attr, "main_class", None),
+        package_manifest = artifact_location(package_manifest),
+        sources = sources,
+        test_class = getattr(ctx.rule.attr, "test_class", None),
+    )
+
+    ide_info["java_ide_info"] = java_info
+    ide_info_files += [ide_info_file]
+    update_sync_output_groups(output_groups, "intellij-info-java", depset(ide_info_files))
+    update_sync_output_groups(output_groups, "intellij-compile-java", depset(compile_files))
+    update_sync_output_groups(output_groups, "intellij-resolve-java", depset(resolve_files))
+
+    # also add transitive hjars + src jars, to catch implicit deps
+    if hasattr(java, "transitive_compile_time_jars"):
+        update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_compile_time_jars)
+        update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_source_jars)
+
+    fail((target, ide_info_files, compile_files, resolve_files))
+
+    return True
 
 
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -767,6 +939,17 @@ def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars
     )
     intellij_resolve_files = [filtered_jar, filtered_source_jar]
     return output_jar, intellij_resolve_files
+
+
+def collect_rust_sources(ctx):
+    srcfiles = []
+    if hasattr(ctx.rule.attr, "srcs"):
+        srcs = ctx.rule.attr.srcs
+        for src in srcs:
+            for f in src.files.to_list():
+                srcfiles.append(f)
+    return srcfiles
+
 
 def divide_java_sources(ctx):
     """Divide sources into plain java, generated java, and srcjars."""
@@ -1196,6 +1379,12 @@ def make_intellij_info_aspect(aspect_impl, semantics):
             executable = True,
             allow_files = True,
         ),
+        "_cargo_toml_builder": attr.label(
+            default = tool_label("CargoTomlBuilder"),
+            cfg = "host",
+            executable = True,
+            allow_files = True,
+        )
     }
 
     # add attrs required by semantics

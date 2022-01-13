@@ -156,6 +156,7 @@ message GoIdeInfo {
 
 message RustIdeInfo {
   repeated ArtifactLocation sources = 1;
+  ArtifactLocation deps_count = 2;
 }
 
 message JsIdeInfo {

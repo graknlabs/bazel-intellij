@@ -320,6 +320,22 @@ jvm_maven_import_external(
     server_urls = ["https://repo1.maven.org/maven2"],
 )
 
+jvm_maven_import_external(
+    name = "night_config_core",
+    artifact = "com.electronwill.night-config:core:3.6.5",
+    artifact_sha256 = "d47fd261e4c20c6f800a0f354644b5e83840347dde17d46537a9cb1c5a4207ba",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+jvm_maven_import_external(
+    name = "night_config_toml",
+    artifact = "com.electronwill.night-config:toml:3.6.5",
+    artifact_sha256 = "12774bf07aeb893044fba8c38d80419f6f3adc0a28cc3b88325018dcf12e8bdf",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
 _JARJAR_BUILD_FILE = """
 java_binary(
     name = "jarjar_bin",
