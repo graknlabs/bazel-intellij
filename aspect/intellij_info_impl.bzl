@@ -13,6 +13,7 @@ load(
     ":make_variables.bzl",
     "expand_make_variables",
 )
+load("@rules_rust//rust:rust_common.bzl", "CrateInfo")
 
 # Defensive list of features that can appear in the C++ toolchain, but which we
 # definitely don't want to enable (when enabled, they'd contribute command line
@@ -431,11 +432,44 @@ def _build_cargo_toml(ctx, target, source_files):
 #        map_each = _package_manifest_file_argument,
 #    )
 #    args.use_param_file("@%s")
-#    args.set_param_file_format("multiline")
+#    args.set_param_file_format("multiline") # TODO: support param file
 
-    crate_summary = _aggregate_crate_summary(target, ctx)
+    deps = {}
+    for dependency in [dep for dep in getattr(ctx.rule.attr, "deps", []) if CrateInfo in dep]:
+        deps[dependency[CrateInfo].name] = dependency[CrateInfo].version
+
     args.add("--name")
-    args.add(crate_summary.name)
+    args.add(_crate_name(target, ctx))
+
+    args.add("--crate-root")
+    args.add(target[CrateInfo].root)
+
+    args.add_joined(
+        "--path-deps",
+        [k for k, v in deps.items() if v == "0.0.0"],
+        join_with = ":"
+    )
+    args.add_joined(
+        "--external-deps",
+        ["{}={}".format(k, v) for k, v in deps.items() if v != "0.0.0"],
+        join_with = ":"
+    )
+    if (ctx.rule.kind == "rust_binary"):
+        args.add("--bin-path")
+        entry_points = [f for f in source_files if f.basename in ["main.rs", "%s.rs" % ctx.rule.attr.name]]
+        if (len(entry_points) == 0):
+            fail("cannot find entry point for rust_binary target %s: srcs should contain either main.rs or %s.rs" % (ctx.rule.attr.name, ctx.rule.attr.name))
+        if (len(entry_points) > 1):
+            fail("found ambiguous entry points for rust_binary target %s: srcs should contain exactly one of main.rs or %s.rs" % (ctx.rule.attr.name, ctx.rule.attr.name))
+        args.add(entry_points[0].short_path)
+    elif (ctx.rule.kind == "rust_library"):
+        args.add("--lib-path")
+        entry_points = [f for f in source_files if f.basename in ["lib.rs", "%s.rs" % ctx.rule.attr.name]]
+        if (len(entry_points) == 0):
+            fail("cannot find entry point for rust_library target %s: srcs should contain either lib.rs or %s.rs" % (ctx.rule.attr.name, ctx.rule.attr.name))
+        if (len(entry_points) > 1):
+            fail("found ambiguous entry points for rust_library target %s: srcs should contain exactly one of lib.rs or %s.rs" % (ctx.rule.attr.name, ctx.rule.attr.name))
+        args.add(entry_points[0].short_path)
 
     ctx.actions.run(
         inputs = source_files,
@@ -448,24 +482,16 @@ def _build_cargo_toml(ctx, target, source_files):
     return output_manifest
 
 
-CrateSummary = provider(
-    fields = {
-        "name": "Crate name",
-        "version": "Crate version",
-        "deps": "Crate dependencies",
-    },
-)
-
-def _aggregate_crate_summary(target, ctx):
+def _crate_name(target, ctx):
     name = ctx.rule.attr.name
     for tag in ctx.rule.attr.tags:
         if tag.startswith("crate-name"):
             name = tag.split("=")[1]
-    return CrateSummary(
-        name = name,
-        version = ctx.rule.attr.version,
-        deps = [target for target in getattr(ctx.rule.attr, "deps", [])]
-    )
+    return name
+
+
+def _crate_deps(target, ctx):
+    return [target for target in getattr(ctx.rule.attr, "deps", [])]
 
 
 def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):

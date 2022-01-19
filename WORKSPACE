@@ -467,3 +467,12 @@ http_archive(
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
 kotlin_repositories()
+
+http_archive(
+    name = "rules_rust",
+    sha256 = "0e75661570c9859c15c6a10fbc3a3cfa8855bf4bb7db375612beca6ea4a61261",
+    strip_prefix = "rules_rust-abdb288efe98bebb23001adbfbad5468a9c08fe3",
+    urls = [
+        "https://github.com/vaticle/rules_rust/archive/abdb288efe98bebb23001adbfbad5468a9c08fe3.tar.gz",
+    ],
+)
