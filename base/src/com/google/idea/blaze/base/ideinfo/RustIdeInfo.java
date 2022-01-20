@@ -24,19 +24,13 @@ import java.util.Objects;
 /** Ide info specific to Rust rules. */
 public final class RustIdeInfo implements ProtoWrapper<IntellijIdeInfo.RustIdeInfo> {
   private final ImmutableList<ArtifactLocation> sources;
-  @Nullable private final ArtifactLocation depsCount;
 
-  private RustIdeInfo(
-      ImmutableList<ArtifactLocation> sources,
-      @Nullable ArtifactLocation depsCount) {
+  private RustIdeInfo(ImmutableList<ArtifactLocation> sources) {
     this.sources = sources;
-    this.depsCount = depsCount;
   }
 
   static RustIdeInfo fromProto(IntellijIdeInfo.RustIdeInfo proto) {
-    return new RustIdeInfo(
-        ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
-        proto.hasDepsCount() ? ArtifactLocation.fromProto(proto.getDepsCount()) : null);
+    return new RustIdeInfo(ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto));
   }
 
   @Override
@@ -44,17 +38,11 @@ public final class RustIdeInfo implements ProtoWrapper<IntellijIdeInfo.RustIdeIn
     IntellijIdeInfo.RustIdeInfo.Builder builder =
         IntellijIdeInfo.RustIdeInfo.newBuilder()
             .addAllSources(ProtoWrapper.mapToProtos(sources));
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setDepsCount, depsCount);
     return builder.build();
   }
 
   public ImmutableList<ArtifactLocation> getSources() {
     return sources;
-  }
-
-  @Nullable
-  public ArtifactLocation getDepsCount() {
-    return depsCount;
   }
 
   public static Builder builder() {
@@ -65,9 +53,7 @@ public final class RustIdeInfo implements ProtoWrapper<IntellijIdeInfo.RustIdeIn
   public static class Builder {
 
     public RustIdeInfo build() {
-      return new RustIdeInfo(
-          ImmutableList.of(),
-          null);
+      return new RustIdeInfo(ImmutableList.of());
     }
   }
 
@@ -80,14 +66,11 @@ public final class RustIdeInfo implements ProtoWrapper<IntellijIdeInfo.RustIdeIn
       return false;
     }
     RustIdeInfo that = (RustIdeInfo) o;
-    return Objects.equals(sources, that.sources)
-        && Objects.equals(depsCount, that.depsCount);
+    return Objects.equals(sources, that.sources);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        sources,
-        depsCount);
+    return Objects.hash(sources);
   }
 }

@@ -34,15 +34,9 @@ java_library(
     ],
 )
 
-optional_plugin_xml(
-    name = "optional_xml",
-    module = "com.intellij.modules.rust",
-    plugin_xml = "src/META-INF/rust-contents.xml",
-)
-
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = [":optional_xml"],
+    optional_plugin_xmls = [],
     plugin_xmls = ["src/META-INF/blaze-rust.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":rust"],

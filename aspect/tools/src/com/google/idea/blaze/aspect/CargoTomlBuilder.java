@@ -29,8 +29,6 @@ public class CargoTomlBuilder {
 
     static final class Options {
         String name;
-        List<Common.ArtifactLocation> sources;
-        Path crateRoot;
         Path binPath;
         Path libPath;
         List<String> pathDeps;
@@ -41,9 +39,6 @@ public class CargoTomlBuilder {
     static Options parseArgs(String[] args) {
         Options options = new Options();
         options.name = OptionParser.parseSingleOption(args, "name", x -> x);
-        options.sources =
-                OptionParser.parseSingleOption(args, "sources", ArtifactLocationParser::parseList);
-        options.crateRoot = OptionParser.parseSingleOption(args, "crate-root", Paths::get);
         options.binPath = OptionParser.parseSingleOption(args, "bin-path", Paths::get);
         options.libPath = OptionParser.parseSingleOption(args, "lib-path", Paths::get);
         options.pathDeps = OptionParser.parseSingleOption(args, "path-deps", CargoTomlBuilder::parseStringList);

@@ -146,15 +146,15 @@ public final class SyncProjectTargetsHelper {
             String.format(
                 "%d targets found under project directories; syncing %d of them.",
                 targets.size(), retained.size())));
-      context.output(PrintOutput.log(targets.stream()
-              .map(t -> t.kindString + ":kind=" + t.getKind())
-              .collect(Collectors.joining(","))));
-      context.output(PrintOutput.log("stringToKind=" + Kind.ApplicationState.getService().stringToKind.entrySet().toString()));
-      context.output(PrintOutput.log(targets.stream()
-              .filter(t -> t.getKind() != null)
-              .map(t -> t.getKind().getKindString() + t.getKind().getLanguageClasses().toString())
-              .collect(Collectors.joining(","))));
-      context.output(PrintOutput.log("activeLanguages: " + languageSettings.getActiveLanguages().toString()));
+//    context.output(PrintOutput.log(targets.stream()
+//            .map(t -> t.kindString + ":kind=" + t.getKind())
+//            .collect(Collectors.joining(","))));
+//    context.output(PrintOutput.log("stringToKind=" + Kind.ApplicationState.getService().stringToKind.entrySet()));
+//    context.output(PrintOutput.log(targets.stream()
+//            .filter(t -> t.getKind() != null)
+//            .map(t -> t.getKind().getKindString() + t.getKind().getLanguageClasses().toString())
+//            .collect(Collectors.joining(","))));
+//    context.output(PrintOutput.log("activeLanguages: " + languageSettings.getActiveLanguages().toString()));
     return retained;
   }
 }
