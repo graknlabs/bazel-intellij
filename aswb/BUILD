@@ -56,6 +56,8 @@ stamped_plugin_xml(
     description_file = "src/META-INF/description.html",
     plugin_id = "com.google.idea.bazel.aswb",
     plugin_name = "Bazel",
+    # #api212: We depend on an API which is only contained in 2021.2.1+.
+    since_build_numbers = {"212": "212.5080.55"},
     stamp_since_build = True,
     stamp_until_build = True,
     version = VERSION,
@@ -78,8 +80,18 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2020.3": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
-        "android-studio-2021.1": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
+        "android-studio-2020.3": glob([
+            "tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java",
+            "tests/utils/sdkcompat/as203/com/google/idea/blaze/android/functional/*.java",
+        ]),
+        "android-studio-2021.1": glob([
+            "tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java",
+            "tests/utils/sdkcompat/as211/com/google/idea/blaze/android/functional/*.java",
+        ]),
+        "android-studio-2021.2": glob([
+            "tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java",
+            "tests/utils/sdkcompat/as212/com/google/idea/blaze/android/functional/*.java",
+        ]),
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
@@ -102,6 +114,7 @@ java_library(
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-2020.3": glob(["sdkcompat/as203/**/*.java"]),
         "android-studio-2021.1": glob(["sdkcompat/as211/**/*.java"]),
+        "android-studio-2021.2": glob(["sdkcompat/as212/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     visibility = combine_visibilities(

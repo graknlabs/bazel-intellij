@@ -3,35 +3,35 @@
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for internal Blaze Plugin
-    "intellij-latest": "intellij-2021.1",
-    "intellij-latest-mac": "intellij-2021.1-mac",
+    "intellij-latest": "intellij-2021.2",
+    "intellij-latest-mac": "intellij-2021.2-mac",
     "intellij-beta": "intellij-2021.2",
-    "intellij-under-dev": "intellij-2021.2",
-    "intellij-ue-latest": "intellij-ue-2021.1",
-    "intellij-ue-latest-mac": "intellij-ue-2021.1-mac",
+    "intellij-under-dev": "intellij-2021.3",
+    "intellij-ue-latest": "intellij-ue-2021.2",
+    "intellij-ue-latest-mac": "intellij-ue-2021.2-mac",
     "intellij-ue-beta": "intellij-ue-2021.2",
-    "intellij-ue-under-dev": "intellij-ue-2021.2",
+    "intellij-ue-under-dev": "intellij-ue-2021.3",
     "android-studio-latest": "android-studio-2020.3",
     "android-studio-beta": "android-studio-2020.3",
     "android-studio-beta-mac": "android-studio-2020.3-mac",
     "android-studio-canary": "android-studio-2021.1",
-    "clion-latest": "clion-2021.1",
-    "clion-latest-mac": "clion-2021.1-mac",
+    "clion-latest": "clion-2021.2",
+    "clion-latest-mac": "clion-2021.2-mac",
     "clion-beta": "clion-2021.2",
     "clion-under-dev": "clion-2021.2",
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-stable": "intellij-2021.2",
-    "intellij-oss-beta": "intellij-2021.2",
+    "intellij-oss-beta": "intellij-2021.3",
     "intellij-oss-under-dev": "intellij-2021.3",
     "intellij-ue-oss-stable": "intellij-ue-2021.2",
-    "intellij-ue-oss-beta": "intellij-ue-2021.2",
+    "intellij-ue-oss-beta": "intellij-ue-2021.3",
     "intellij-ue-oss-under-dev": "intellij-ue-2021.3",
     "android-studio-oss-stable": "android-studio-2020.3",
     "android-studio-oss-beta": "android-studio-2020.3",
     "android-studio-oss-under-dev": "android-studio-2021.1",
     "clion-oss-stable": "clion-2021.2",
-    "clion-oss-beta": "clion-2021.2",
-    "clion-oss-under-dev": "clion-2021.2",
+    "clion-oss-beta": "clion-2021.3",
+    "clion-oss-under-dev": "clion-2021.3",
 }
 
 DIRECT_IJ_PRODUCTS = {
@@ -111,6 +111,10 @@ DIRECT_IJ_PRODUCTS = {
         ide = "android-studio",
         directory = "android_studio_2021_1",
     ),
+    "android-studio-2021.2": struct(
+        ide = "android-studio",
+        directory = "android_studio_2021_2",
+    ),
     "clion-2020.3": struct(
         ide = "clion",
         directory = "clion_2020_3",
@@ -134,6 +138,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2021.2-mac": struct(
         ide = "clion",
         directory = "clion_2021_2",
+    ),
+    "clion-2021.3": struct(
+        ide = "clion",
+        directory = "clion_2021_3",
+    ),
+    "clion-2021.3-mac": struct(
+        ide = "clion",
+        directory = "clion_2021_3",
     ),
 }
 

@@ -868,6 +868,13 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         )
         resolve_files += filtered_gen_resolve_files
 
+    # Custom lint checks are incorporated as java plugins. We collect them here and register them with the IDE so that the IDE can also run the same checks.
+    plugin_processor_jars = []
+    if hasattr(java, "annotation_processing") and java.annotation_processing:
+        plugin_processor_jar_files = java.annotation_processing.processor_classpath.to_list()
+        resolve_files += plugin_processor_jar_files
+        plugin_processor_jars = [annotation_processing_jars(jar, None) for jar in plugin_processor_jar_files]
+
     java_info = struct_omit_none(
         filtered_gen_jar = filtered_gen_jar,
         generated_jars = gen_jars,
@@ -877,6 +884,8 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         package_manifest = artifact_location(package_manifest),
         sources = sources,
         test_class = getattr(ctx.rule.attr, "test_class", None),
+        # TODO(b/211509545): re-enable plugin_processor_jars after mac user get latest aswb/ ij (2021.12.14.0.1 or later)
+        #plugin_processor_jars = plugin_processor_jars,
     )
 
     ide_info["java_ide_info"] = java_info

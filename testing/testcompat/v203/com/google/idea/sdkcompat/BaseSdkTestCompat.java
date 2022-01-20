@@ -15,11 +15,16 @@
  */
 package com.google.idea.sdkcompat;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
-import java.time.Duration;
-import java.time.Instant;
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
+import java.util.List;
+import org.picocontainer.MutablePicoContainer;
 
 /**
  * Provides SDK compatibility shims for base plugin API classes, available to all IDEs during
@@ -28,39 +33,19 @@ import java.time.Instant;
 public final class BaseSdkTestCompat {
   private BaseSdkTestCompat() {}
 
-  /**
-   * #api203: Doing duration calculations is not necessary anymore. Inline into IndexingLoggerTest.
-   */
-  @SuppressWarnings("UnstableApiUsage")
-  public static void setIndexingTimes(
-      ProjectIndexingHistory.IndexingTimes projectIndexingHistory,
-      Duration expectedIndexingDuration,
-      Duration expectedUpdatingDuration,
-      Duration expectedScanFilesDuration) {
-
-    Instant indexingStart = Instant.ofEpochMilli(1627913529);
-    projectIndexingHistory.setIndexingEnd(indexingStart.plus(expectedIndexingDuration));
-    projectIndexingHistory.setIndexingStart(indexingStart);
-
-    Instant totalStart = Instant.ofEpochMilli(1627913533);
-    projectIndexingHistory.setTotalEnd(totalStart.plus(expectedUpdatingDuration));
-    projectIndexingHistory.setTotalStart(totalStart);
-
-    Instant scanFilesEnd = Instant.ofEpochMilli(1327913533);
-    projectIndexingHistory.setScanFilesEnd(scanFilesEnd.plus(expectedScanFilesDuration));
-    projectIndexingHistory.setScanFilesStart(scanFilesEnd);
+  /** #api212: inline into test cases */
+  public static List<Annotation> testAnnotator(Annotator annotator, PsiElement... elements) {
+    PsiFile file = elements[0].getContainingFile();
+    AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(file));
+    for (PsiElement element : elements) {
+      holder.runAnnotatorWithContext(element, annotator);
+    }
+    holder.assertAllAnnotationsCreated();
+    return ContainerUtil.immutableList(holder);
   }
 
-  /** #api203: inline into IndexingLoggerTest */
-  @SuppressWarnings("UnstableApiUsage")
-  public static void setIndexingVisibleTime(
-      IndexingJobStatistics indexingStatistic, Duration expectedIndexingVisibleTime) {
-    indexingStatistic.setTotalIndexingTime(expectedIndexingVisibleTime.toNanos());
-  }
-
-  /** #api211 inline into IndexingLoggerTest */
-  @SuppressWarnings("UnstableApiUsage")
-  public static ProjectIndexingHistory initializeProjectIndexingHistory(Project project) {
-    return new ProjectIndexingHistory(project);
+  /** #api212: inline into ServiceHelper */
+  public static void unregisterComponent(ComponentManager componentManager, String name) {
+    ((MutablePicoContainer) componentManager.getPicoContainer()).unregisterComponent(name);
   }
 }
