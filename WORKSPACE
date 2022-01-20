@@ -499,15 +499,6 @@ kotlin_repositories()
 
 kt_register_toolchains()
 
-http_archive(
-    name = "rules_rust",
-    sha256 = "0e75661570c9859c15c6a10fbc3a3cfa8855bf4bb7db375612beca6ea4a61261",
-    strip_prefix = "rules_rust-abdb288efe98bebb23001adbfbad5468a9c08fe3",
-    urls = [
-        "https://github.com/vaticle/rules_rust/archive/abdb288efe98bebb23001adbfbad5468a9c08fe3.tar.gz",
-    ],
-)
-
 # Without this dependency, when a test that uses Google truth fails, instead of
 # the textual difference we get java.lang.NoClassDefFoundError: difflib/DiffUtils
 jvm_maven_import_external(
@@ -534,4 +525,13 @@ jvm_maven_import_external(
     artifact_sha256 = "2e3091a94b8b822c9b68c4dc92ad6a6b0e39e2245b0fc75862de20f5a7a71e9a",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+http_archive(
+    name = "rules_rust",
+    sha256 = "0e75661570c9859c15c6a10fbc3a3cfa8855bf4bb7db375612beca6ea4a61261",
+    strip_prefix = "rules_rust-abdb288efe98bebb23001adbfbad5468a9c08fe3",
+    urls = [
+        "https://github.com/vaticle/rules_rust/archive/abdb288efe98bebb23001adbfbad5468a9c08fe3.tar.gz",
+    ],
 )
