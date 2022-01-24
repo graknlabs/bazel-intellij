@@ -225,7 +225,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         builder::setAndroidInstrumentationInfo, androidInstrumentationInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setPyIdeInfo, pyIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setGoIdeInfo, goIdeInfo);
-      ProtoWrapper.unwrapAndSetIfNotNull(builder::setRustIdeInfo, rustIdeInfo);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setRustIdeInfo, rustIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJsIdeInfo, jsIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setTsIdeInfo, tsIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setDartIdeInfo, dartIdeInfo);
@@ -631,7 +631,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         && Objects.equals(androidInstrumentationInfo, that.androidInstrumentationInfo)
         && Objects.equals(pyIdeInfo, that.pyIdeInfo)
         && Objects.equals(goIdeInfo, that.goIdeInfo)
-            && Objects.equals(rustIdeInfo, that.rustIdeInfo)
+        && Objects.equals(rustIdeInfo, that.rustIdeInfo)
         && Objects.equals(jsIdeInfo, that.jsIdeInfo)
         && Objects.equals(tsIdeInfo, that.tsIdeInfo)
         && Objects.equals(dartIdeInfo, that.dartIdeInfo)
