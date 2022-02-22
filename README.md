@@ -1,3 +1,16 @@
+## Vaticle Development Notes
+
+### Features
+
+- Can view sources of external Java deps loaded via Bazel
+- Provides code completion and navigation in Rust
+- Custom Bazel logo
+
+### Build
+
+1. Modify `version.bzl` - version should look like `xxxx.xx.xx.0.0-vaticle` (example: `2021.12.21.0.0-vaticle`)
+2. `bazel build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-ue-2021.2` (adjust numbers / product as appropriate)
+
 # An IntelliJ plugin for [Bazel](http://bazel.build) projects
 
 This is an early-access version of our Bazel plugins for IntelliJ,
