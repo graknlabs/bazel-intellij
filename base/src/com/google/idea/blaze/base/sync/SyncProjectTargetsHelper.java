@@ -132,11 +132,7 @@ public final class SyncProjectTargetsHelper {
     }
     ImmutableList<TargetExpression> retained =
         SourceToTargetFilteringStrategy.filterTargets(targets).stream()
-            .filter(
-                t ->
-                    t.getKind() != null
-                        && t.getKind().getLanguageClasses().stream()
-                            .anyMatch(languageSettings::isLanguageActive))
+            .filter(t -> t.getKind() != null)
             .map(t -> t.label)
             .collect(toImmutableList());
     context.output(

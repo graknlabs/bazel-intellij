@@ -157,10 +157,7 @@ public final class BlazeAndroidRunConfigurationRunner
   }
 
   private static LaunchOptions.Builder getDefaultLaunchOptions() {
-    return LaunchOptions.builder()
-        .setClearLogcatBeforeStart(false)
-        .setSkipNoopApkInstallations(true)
-        .setForceStopRunningApp(true);
+    return LaunchOptionsCompat.getDefaultLaunchOptions();
   }
 
   @Override
@@ -192,7 +189,7 @@ public final class BlazeAndroidRunConfigurationRunner
           BlazeAndroidDeviceSelector.DeviceSession deviceSession =
               env.getCopyableUserData(DEVICE_SESSION_KEY);
 
-          BlazeApkBuildStep buildStep = runContext.getBuildStep();
+          ApkBuildStep buildStep = runContext.getBuildStep();
           ScopedTask<Void> buildTask =
               new ScopedTask<Void>(context) {
                 @Override

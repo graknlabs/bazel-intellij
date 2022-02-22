@@ -46,6 +46,7 @@ message JavaIdeInfo {
   LibraryArtifact filtered_gen_jar = 6;
   string main_class = 7;
   string test_class = 8;
+  repeated LibraryArtifact plugin_processor_jars = 9;
 }
 
 message CIdeInfo {
@@ -154,6 +155,10 @@ message GoIdeInfo {
   repeated string library_labels = 5;
 }
 
+message RustIdeInfo {
+  repeated ArtifactLocation sources = 1;
+}
+
 message JsIdeInfo {
   repeated ArtifactLocation sources = 1;
 }
@@ -236,4 +241,5 @@ message TargetIdeInfo {
   TsIdeInfo ts_ide_info = 160;
   DartIdeInfo dart_ide_info = 170;
   KotlinToolchainIdeInfo kt_toolchain_ide_info = 180;
+  RustIdeInfo rust_ide_info = 190;
 }

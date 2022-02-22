@@ -28,7 +28,7 @@ no_mockito_extensions(
 java_import(
     name = "guava",
     jars = glob([
-        "clion-*/lib/3rd-party.jar",
+        "clion-*/lib/3rd-party-rt.jar",
     ]),
 )
 
@@ -68,14 +68,6 @@ java_import(
 java_import(
     name = "tslint",
     jars = glob(["clion-*/plugins/tslint/lib/*.jar"]),
-)
-
-java_import(
-    name = "tasks",
-    jars = glob([
-        "clion-*/plugins/tasks/lib/tasks-api.jar",
-        "clion-*/plugins/tasks/lib/tasks-core.jar",
-    ]),
 )
 
 java_import(

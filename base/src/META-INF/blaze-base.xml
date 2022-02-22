@@ -298,6 +298,7 @@
         language="BUILD"
         implementationClass="com.google.idea.blaze.base.run.producers.BuildFileRunLineMarkerContributor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.base.plugin.BlazeHideMakeActions"/>
+    <notificationGroup displayType="BALLOON" id="BuildifierBinaryMissing"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -460,6 +461,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BinaryContextProvider" interface="com.google.idea.blaze.base.run.producers.BinaryContextProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.HeuristicTestIdentifier" interface="com.google.idea.blaze.base.run.producers.HeuristicTestIdentifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputsProvider" interface="com.google.idea.blaze.base.model.OutputsProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.LibraryToTargetResolver" interface="com.google.idea.blaze.base.model.LibraryToTargetResolver"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.VcsSyncListener" interface="com.google.idea.blaze.base.vcs.VcsSyncListener"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.CommonMacroContributor" interface="com.google.idea.blaze.base.lang.buildfile.completion.CommonMacroContributor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BinaryPathRemapper" interface="com.google.idea.blaze.base.async.process.BinaryPathRemapper"/>
@@ -486,7 +488,7 @@
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandler"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandler" order="last" id="fallback"/>
     <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" order="last"/>
-    <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.BazelBuildifierBinaryProvider"/>
+    <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.DefaultBuildifierBinaryProvider"/>
     <BuildResultHelperProvider order="last" implementation="com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep$Provider"/>
     <BlazeCommandRunner order="last" implementation="com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider"/>

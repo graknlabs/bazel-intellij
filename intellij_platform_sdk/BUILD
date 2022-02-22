@@ -318,6 +318,13 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-2021.2",
+    values = {
+        "define": "ij_product=android-studio-2021.2",
+    },
+)
+
+config_setting(
     name = "clion-latest",
     values = {
         "define": "ij_product=clion-latest",
@@ -532,6 +539,7 @@ java_library(
         "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
         "android-studio-2020.3": ["@jsr305_annotations//jar"],
         "android-studio-2021.1": ["@jsr305_annotations//jar"],
+        "android-studio-2021.2": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],
     }),
@@ -633,17 +641,6 @@ java_library(
     ),
 )
 
-# IntelliJ tasks plugin
-java_library(
-    name = "tasks",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        android_studio = [":tasks"],
-        clion = [":tasks"],
-        intellij = [":tasks"],
-    ),
-)
-
 # terminal plugin
 java_library(
     name = "terminal",
@@ -666,6 +663,30 @@ java_library(
     ),
 )
 
+# IntelliJ Shared Indexes plugin
+java_library(
+    name = "shared_indexes",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":shared_indexes"],
+        intellij_ue = [":shared_indexes"],
+    ),
+)
+
+# IntelliJ Shared Indexes plugin
+java_library(
+    name = "shared_indexes_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":shared_indexes"],
+        intellij_ue = [":shared_indexes"],
+    ),
+)
+
 # Not all plugin api versions have lib/resources.jar from which we used to get
 # the application information to set the idea-version compatibility range of the plugin.
 # However, product-info.json contains this information but it was not imported to google3
@@ -675,6 +696,7 @@ filegroup(
     name = "application_info_container",
     srcs = select_from_plugin_api_version_directory({
         "android-studio-2021.1": [":application_info_json"],
+        "android-studio-2021.2": [":application_info_json"],
         "intellij-2021.2": [":application_info_json"],
         "intellij-ue-2021.2": [":application_info_json"],
         "intellij-2021.3": [":application_info_json"],
