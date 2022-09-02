@@ -422,7 +422,8 @@ def _crate_info(ctx):
             name = tag.split("=")[1]
     return struct(
         name = name,
-        version = getattr(ctx.rule.attr, "version", "0.0.0")
+        version = getattr(ctx.rule.attr, "version", "0.0.0"),
+        features = getattr(ctx.rule.attr, "crate_features", [])
     )
 
 def _build_cargo_toml(ctx, target, source_files, crate_info):
@@ -433,24 +434,28 @@ def _build_cargo_toml(ctx, target, source_files, crate_info):
     args.add("--output-manifest")
     args.add(output_manifest.path)
 
-    path_deps = {}
-    external_deps = {}
+    cargo_deps = {}
     for dependency in getattr(ctx.rule.attr, "deps", []) + getattr(ctx.rule.attr, "proc_macro_deps", []):
         if dependency.intellij_info.kind not in ["rust_binary", "rust_library", "rust_proc_macro"]:
             continue
+        dep_info = dependency.intellij_info.crate
+        features_str = ",".join(dep_info.features)
         if _is_cargo_raze_crate(dependency):
-            external_deps[dependency.intellij_info.crate.name] = dependency.intellij_info.crate.version
+            cargo_deps[dependency.intellij_info.crate.name] = "version=%s;features=%s" % (dep_info.version, features_str) if features_str else "version=%s" % dep_info.version
         else:
-            path_deps[dependency.intellij_info.crate.name] = _cargo_path_dep_path(target, dependency)
+            path = _cargo_path_dep_path(target, dependency)
+            cargo_deps[dependency.intellij_info.crate.name] = "path=%s;features=%s" % (path, features_str) if features_str else "path=%s" % path
 
     args.add("--name")
     args.add(crate_info.name)
 
+    args.add("--version")
+    args.add(crate_info.version)
+
     args.add("--edition")
     args.add(ctx.rule.attr.edition or "2021")
 
-    args.add_joined("--path-deps", ["{}={}".format(k, v) for k, v in path_deps.items()], join_with = ":")
-    args.add_joined("--external-deps", ["{}={}".format(k, v) for k, v in external_deps.items()], join_with = ":")
+    args.add_joined("--deps", ["{}={}".format(k, v) for k, v in cargo_deps.items()], join_with = ":")
 
     args.add("--root-path")
     args.add(_target_root_path(target))
@@ -506,15 +511,26 @@ def _is_cargo_raze_crate(rust_target):
     return str(rust_target.label).startswith("@raze__")
 
 def _cargo_path_dep_path(current_target, dep_target):
-    return _cargo_path_dep_path_external_workspace(current_target, dep_target) if "@" in str(dep_target.label) else _cargo_path_dep_path_current_workspace(current_target, dep_target)
+    if str(current_target.label).split("//")[0] == str(dep_target.label).split("//")[0]:
+        return _cargo_dep_path_same_workspace(current_target, dep_target)
+    elif "@" not in str(current_target.label):
+        return _cargo_dep_path_local_to_external(current_target, dep_target)
+    else:
+        return _cargo_dep_path_external_to_external(current_target, dep_target)
 
-def _cargo_path_dep_path_current_workspace(current_target, dep_target):
-    # example: (//lib1:lib1, //lib2/internal:internal) --> ../lib2/internal
+def _cargo_dep_path_same_workspace(current_target, dep_target):
+    # examples:
+    # (//lib1:lib1, //lib2/internal:internal) --> ../lib2/internal
+    # (@extern_workspace//:root, @extern_workspace//lib2:lib2 --> lib2
     return _cargo_path_dep_double_dots(current_target) + str(dep_target.label).split("//")[1].split(":")[0]
 
-def _cargo_path_dep_path_external_workspace(current_target, dep_target):
+def _cargo_dep_path_local_to_external(current_target, dep_target):
     # example: (//lib1:lib1, @extern_workspace//lib2/exported:exported) --> ../external/extern_workspace/lib2/exported
     return _cargo_path_dep_double_dots(current_target) + "external/" + str(dep_target.label)[1:].split("//")[0] + "/" + str(dep_target.label).split("//")[1].split(":")[0]
+
+def _cargo_dep_path_external_to_external(current_target, dep_target):
+    # example: (//@extern_workspace0//lib1:lib1, @extern_workspace//lib2/exported:exported) --> ../../extern_workspace/lib2/exported
+    return _cargo_path_dep_double_dots(current_target) + "../" + str(dep_target.label)[1:].split("//")[0] + "/" + str(dep_target.label).split("//")[1].split(":")[0]
 
 def _cargo_path_dep_double_dots(current_target):
     double_dots = ""
@@ -546,7 +562,7 @@ def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         ctx.actions.write(source_path_copy, "// This file is intentionally blank. IntelliJ uses it to identify test targets.")
         update_sync_output_groups(output_groups, "intellij-resolve-rs", depset([source_path_copy]))
 
-    ide_info["rust_ide_info"] = struct_omit_none(sources = [artifact_location(f) for f in sources])
+    ide_info["rust_ide_info"] = struct_omit_none(sources = sources_from_target(ctx))
     update_sync_output_groups(output_groups, "intellij-info-rs", depset([ide_info_file]))
     return crate_info
 
