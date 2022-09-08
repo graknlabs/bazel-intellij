@@ -16,11 +16,11 @@
 <idea-plugin>
 
     <extensions defaultExtensionNs="com.google.idea.blaze">
-        <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.rust.BlazeRustRunConfigurationHandlerProvider" order="first"/>
+        <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.rust.run.BlazeRustRunConfigurationHandlerProvider" order="first"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <programRunner implementation="com.google.idea.blaze.rust.BlazeRustDebugRunner"/>
+        <programRunner implementation="com.google.idea.blaze.rust.run.BlazeRustDebugRunner"/>
     </extensions>
 
 </idea-plugin>
