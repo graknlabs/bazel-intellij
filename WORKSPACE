@@ -235,6 +235,43 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/1347/202220/scala-intellij-bin-2022.2.659.zip",
 )
 
+_RUST_BUILD_FILE = """
+java_import(
+    name = "rust",
+    jars = glob(["intellij-rust/lib/*.jar"]),
+    visibility = ["//visibility:public"],
+)
+"""
+
+# Rust plugin for IntelliJ CE. Required at compile-time for Bazel integration.
+http_archive(
+    name = "rust_2021_2",
+    build_file_content = _RUST_BUILD_FILE,
+    sha256 = "d3a9a03a9b3ba49fbea418418374e77a35c3412d1d2cc6c216cdae073a27b73f",
+    url = "https://plugins.jetbrains.com/files/8182/155605/intellij-rust-0.4.164.4409-212.zip",
+)
+
+http_archive(
+    name = "rust_2021_3",
+    build_file_content = _RUST_BUILD_FILE,
+    sha256 = "04d994b8b666246df02a353b27eb9c8b8d1af46963daf213535dbcb275b6768f",
+    url = "https://plugins.jetbrains.com/files/8182/179257/intellij-rust-0.4.171.4656-213.zip",
+)
+
+http_archive(
+    name = "rust_2022_1",
+    build_file_content = _RUST_BUILD_FILE,
+    sha256 = "4a45769df99d1c1f44a7e469d16217065c24e086854617dada112916d1c958cd",
+    url = "https://plugins.jetbrains.com/files/8182/215930/intellij-rust-0.4.177.4844-221.zip",
+)
+
+http_archive(
+    name = "rust_2022_2",
+    build_file_content = _RUST_BUILD_FILE,
+    sha256 = "1312d5281ef33d73c5bf54f56271a35a095ff9a3a36a4e6286a0c48b968a4f16",
+    url = "https://plugins.jetbrains.com/files/8182/215932/intellij-rust-0.4.177.4844-222.zip",
+)
+
 # The plugin api for android_studio_2021_2. This is required to build ASwB,
 # and run integration tests.
 http_archive(

@@ -30,13 +30,19 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
-#        "//third_party/rust",
+        "//third_party/rust",
     ],
+)
+
+optional_plugin_xml(
+    name = "optional_xml",
+    module = "org.rust.lang",
+    plugin_xml = "src/META-INF/rust-contents.xml",
 )
 
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = [],
+    optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-rust.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":rust"],
