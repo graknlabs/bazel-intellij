@@ -16,11 +16,14 @@
 <idea-plugin>
 
     <extensions defaultExtensionNs="com.google.idea.blaze">
-        <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.rust.run.BlazeRustRunConfigurationHandlerProvider" order="first"/>
+        <SyncPlugin implementation="com.google.idea.blaze.rust.sync.BlazeRustSyncPlugin"/>
+<!--        <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.rust.run.BlazeRustRunConfigurationHandlerProvider" order="first"/>-->
+<!--        <TestContextProvider implementation="com.google.idea.blaze.rust.run.producers.RustTestContextProvider"/>-->
     </extensions>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <programRunner implementation="com.google.idea.blaze.rust.run.BlazeRustDebugRunner"/>
-    </extensions>
+<!--    <extensions defaultExtensionNs="com.intellij">-->
+<!--        <programRunner implementation="com.google.idea.blaze.rust.run.BlazeRustDebugRunner"/>-->
+<!--        <postStartupActivity implementation="com.google.idea.blaze.rust.run.producers.NonBlazeProducerSuppressor"/>-->
+<!--    </extensions>-->
 
 </idea-plugin>

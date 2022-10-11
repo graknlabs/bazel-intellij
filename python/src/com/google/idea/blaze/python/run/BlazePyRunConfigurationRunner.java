@@ -244,6 +244,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   @Override
   public boolean executeBeforeRunTask(ExecutionEnvironment env) {
+      System.out.println("BlazePyRunConfigurationRunner.eBRT");
     if (!BlazeCommandRunConfigurationRunner.isDebugging(env)
         || BlazeCommandName.BUILD.equals(BlazeCommandRunConfigurationRunner.getBlazeCommand(env))) {
       return true;

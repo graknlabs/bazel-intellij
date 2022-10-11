@@ -59,6 +59,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
@@ -71,6 +72,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -78,8 +80,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.rust.cargo.runconfig.CargoRunStateBase;
+import org.rust.cargo.runconfig.CargoTestRunState;
+import org.rust.cargo.runconfig.RsExecutableRunner;
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration;
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType;
+import org.rust.cargo.toolchain.impl.CargoMetadata;
+import org.rust.cargo.toolchain.impl.CompilerArtifactMessage;
+import org.rust.cargo.toolchain.impl.Profile;
 
 /** Rust-specific run configuration runner. */
 public class BlazeRustRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
@@ -87,7 +94,7 @@ public class BlazeRustRunConfigurationRunner implements BlazeCommandRunConfigura
     /**
      * Used to store a runner to an {@link ExecutionEnvironment}.
      */
-    private static final Key<AtomicReference<RustExecutionInfo>> EXECUTABLE_KEY =
+     static final Key<AtomicReference<RustExecutionInfo>> EXECUTABLE_KEY =
             Key.create("blaze.debug.rust.executable");
 
     /**
@@ -100,8 +107,15 @@ public class BlazeRustRunConfigurationRunner implements BlazeCommandRunConfigura
             this.configuration = configuration;
         }
 
-        CargoRunStateBase toNativeState(ExecutionEnvironment env) throws ExecutionException {
+        NativeState toNativeState(ExecutionEnvironment env) throws ExecutionException {
             RustExecutionInfo executionInfo = env.getCopyableUserData(EXECUTABLE_KEY).get();
+            if (executionInfo == null) {
+                boolean created = createExecutionInfo(env);
+                if (!created) {
+                    throw new ExecutionException("Failed to create Rust execution info");
+                }
+                executionInfo = env.getCopyableUserData(EXECUTABLE_KEY).get();
+            }
             if (executionInfo.executable == null
                     || StringUtil.isEmptyOrSpaces(executionInfo.executable.getPath())) {
                 throw new ExecutionException("No blaze output script found");
@@ -110,6 +124,7 @@ public class BlazeRustRunConfigurationRunner implements BlazeCommandRunConfigura
                     CargoCommandConfigurationType.Companion.getInstance()
                             .getFactory()
                             .createTemplateConfiguration(env.getProject());
+            nativeConfig.setCommand("test --format=json -Z unstable-options --show-output");
 //        nativeConfig.setScriptName(executionInfo.executable.getPath());
 //        nativeConfig.setAddContentRoots(false);
 //        nativeConfig.setAddSourceRoots(false);
@@ -139,52 +154,50 @@ public class BlazeRustRunConfigurationRunner implements BlazeCommandRunConfigura
 //        }
 //        nativeConfig.setScriptParameters(Strings.emptyToNull(ParametersListUtil.join(args)));
             Label target = getSingleTarget(configuration);
-            return null;
-//      return new PythonScriptCommandLineState(nativeConfig, env) {
+
+//            GoApplicationRunningState nativeState =
+//                    new GoApplicationRunningState(env, module, nativeConfig) {
 //
-//        private final CommandLinePatcher applyHelperPydevFlags =
-//            (commandLine) ->
-//                BlazePyDebugHelper.doBlazeDebugCommandlinePatching(
-//                    nativeConfig.getProject(), target, commandLine);
+//                        @Override
+//                        public boolean isDebug() {
+//                            return true;
+//                        }
 //
-//        @Override
-//        protected ProcessHandler startProcess(
-//            PythonProcessStarter starter, @Nullable CommandLinePatcher... patchers)
-//            throws ExecutionException {
-//          // Need to run after the other CommandLinePatchers
-//          List<CommandLinePatcher> modifiedPatchers = new ArrayList<>();
-//          if (patchers != null) {
-//            Collections.addAll(modifiedPatchers, patchers);
-//          }
-//          modifiedPatchers.add(applyHelperPydevFlags);
-//          ProcessHandler process =
-//              super.startProcess(starter, modifiedPatchers.toArray(new CommandLinePatcher[0]));
-//          BlazePyDebugHelper.attachProcessListeners(target, process);
-//          return process;
-//        }
+//                        @Nullable
+//                        @Override
+//                        public List<GoCommandLineParameter> getBuildingTarget() {
+//                            return null;
+//                        }
 //
-//        @Override
-//        public boolean isDebug() {
-//          return true;
-//        }
-//
-//        @Override
-//        protected ConsoleView createAndAttachConsole(
-//            Project project, ProcessHandler processHandler, Executor executor)
-//            throws ExecutionException {
-//          ConsoleView consoleView = createConsoleBuilder(project, getSdk()).getConsole();
-//          consoleView.addMessageFilter(createUrlFilter(processHandler));
-//
-//          consoleView.attachToProcess(processHandler);
-//          return consoleView;
-//        }
-//
-//        @Override
-//        protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine)
-//            throws ExecutionException {
-//          return super.doCreateProcess(ProcessGroupUtil.newProcessGroupFor(commandLine));
-//        }
-//      };
+//                        @Nullable
+//                        @Override
+//                        public GoExecutor createBuildExecutor() {
+//                            return null;
+//                        }
+//                    };
+//            nativeState.setOutputFilePath(executable.binary.getPath());
+            CargoRunStateBase cargoRunState = (CargoRunStateBase) nativeConfig.getState(env.getExecutor(), env);
+            System.out.println("BRRCR.toNativeState: cargoRunState.commandLine = " + cargoRunState.getCommandLine());
+            ExecutionEnvironment nativeEnv = new ExecutionEnvironmentBuilder(env)
+                    .runProfile(nativeConfig)
+                    .build();
+            return new NativeState(cargoRunState, nativeEnv);
+        }
+
+        private static boolean createExecutionInfo(ExecutionEnvironment env) {
+            System.out.println("BlazeRustRunConfigurationRunner.createExecutionInfo");
+            try {
+                RustExecutionInfo executionInfo = getExecutableToDebug(env);
+                System.out.println("BlazeRustRunConfigurationRunner.createExecutionInfo: produced RustExecutionInfo: " + executionInfo);
+                env.getCopyableUserData(EXECUTABLE_KEY).set(executionInfo);
+                if (executionInfo.executable != null) {
+                    return true;
+                }
+            } catch (ExecutionException e) {
+                ExecutionUtil.handleExecutionError(
+                        env.getProject(), env.getExecutor().getToolWindowId(), env.getRunProfile(), e);
+            }
+            return false;
         }
 
         @Nullable
@@ -243,6 +256,7 @@ public class BlazeRustRunConfigurationRunner implements BlazeCommandRunConfigura
 
     @Override
     public boolean executeBeforeRunTask(ExecutionEnvironment env) {
+        System.out.println("BlazeRustRunConfigurationRunner.executeBeforeRunTask");
         if (!BlazeCommandRunConfigurationRunner.isDebugging(env)
                 || BlazeCommandName.BUILD.equals(BlazeCommandRunConfigurationRunner.getBlazeCommand(env))) {
             return true;
@@ -250,6 +264,7 @@ public class BlazeRustRunConfigurationRunner implements BlazeCommandRunConfigura
         env.getCopyableUserData(EXECUTABLE_KEY).set(null);
         try {
             RustExecutionInfo executionInfo = getExecutableToDebug(env);
+            System.out.println("executeBeforeRunTask: produced RustExecutionInfo: " + executionInfo);
             env.getCopyableUserData(EXECUTABLE_KEY).set(executionInfo);
             if (executionInfo.executable != null) {
                 return true;
@@ -291,7 +306,8 @@ public class BlazeRustRunConfigurationRunner implements BlazeCommandRunConfigura
      *
      * @throws ExecutionException if the target cannot be debugged.
      */
-    private static RustExecutionInfo getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
+    static RustExecutionInfo getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
+
         BlazeCommandRunConfiguration configuration = BlazeCommandRunConfigurationRunner.getConfiguration(env);
         Project project = configuration.getProject();
         BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
@@ -396,13 +412,23 @@ public class BlazeRustRunConfigurationRunner implements BlazeCommandRunConfigura
         return null;
     }
 
-    private static class RustExecutionInfo {
+    static class RustExecutionInfo {
         public final File executable;
         public final ImmutableList<String> args;
 
         RustExecutionInfo(File executable, ImmutableList<String> args) {
             this.executable = executable;
             this.args = args;
+        }
+    }
+
+    static class NativeState {
+        public final CargoRunStateBase cargoRunState;
+        public final ExecutionEnvironment environment;
+
+        NativeState(CargoRunStateBase cargoRunState, ExecutionEnvironment nativeEnv) {
+            this.cargoRunState = cargoRunState;
+            this.environment = nativeEnv;
         }
     }
 }

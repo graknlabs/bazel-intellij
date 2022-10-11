@@ -72,6 +72,7 @@ public class BlazePyDebugRunner extends PyDebugRunner {
   @Override
   protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment environment)
       throws ExecutionException {
+      System.out.println("BlazePyDebugRunner.doExecute");
     if (!(state instanceof BlazePyDummyRunProfileState)) {
       return null;
     }

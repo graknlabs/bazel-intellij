@@ -97,6 +97,7 @@ public final class BlazeBeforeRunTaskProvider
 
   @Override
   public boolean canExecuteTask(RunConfiguration configuration, Task task) {
+      System.out.println("BlazeBeforeRunTaskProvider.canExecuteTask");
     if (configuration instanceof WrappingRunConfiguration) {
       configuration = ((WrappingRunConfiguration) configuration).getPeer();
     }
@@ -109,6 +110,7 @@ public final class BlazeBeforeRunTaskProvider
       final RunConfiguration configuration,
       final ExecutionEnvironment env,
       Task task) {
+      System.out.println("BlazeBeforeRunTaskProvider.executeTask");
     if (!canExecuteTask(configuration, task)) {
       return false;
     }

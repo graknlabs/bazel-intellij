@@ -130,12 +130,15 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
   }
 
   private static boolean enableBlazeBeforeRunTask(BlazeCommandRunConfiguration config) {
+      System.out.println("BRCSL.enableBlazeBeforeRunTask: config.name = " + config.getName());
     @SuppressWarnings("rawtypes")
     List<BeforeRunTask> tasks =
         RunManagerEx.getInstanceEx(config.getProject()).getBeforeRunTasks(config);
     if (tasks.stream().noneMatch(t -> t.getProviderId().equals(BlazeBeforeRunTaskProvider.ID))) {
+        System.out.println("BRCSL.enableBlazeBeforeRunTask: config.name = " + config.getName() + "; no BlazeBeforeRunTask found! Creating one");
       return addBlazeBeforeRunTask(config);
     }
+      System.out.println("BRCSL.enableBlazeBeforeRunTask: config.name = " + config.getName() + "; found existing BlazeBeforeRunTask");
     boolean changed = false;
     for (BeforeRunTask<?> task : tasks) {
       if (task.getProviderId().equals(BlazeBeforeRunTaskProvider.ID) && !task.isEnabled()) {
@@ -147,13 +150,16 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
   }
 
   private static boolean addBlazeBeforeRunTask(BlazeCommandRunConfiguration config) {
+      System.out.println("BRCSL.addBlazeBeforeRunTask: config.name = " + config.getName());
     BeforeRunTaskProvider<?> provider =
         BlazeBeforeRunTaskProvider.getProvider(config.getProject(), BlazeBeforeRunTaskProvider.ID);
     if (provider == null) {
+        System.out.println("BRCSL.addBlazeBeforeRunTask: provider is NULL");
       return false;
     }
     BeforeRunTask<?> task = provider.createTask(config);
     if (task == null) {
+        System.out.println("BRCSL.addBlazeBeforeRunTask: task is NULL");
       return false;
     }
     task.setEnabled(true);
@@ -162,6 +168,7 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
     beforeRunTasks.add(task);
     config.setBeforeRunTasks(beforeRunTasks);
 
+      System.out.println("BRCSL.addBlazeBeforeRunTask: TRUE");
     return true;
   }
 
