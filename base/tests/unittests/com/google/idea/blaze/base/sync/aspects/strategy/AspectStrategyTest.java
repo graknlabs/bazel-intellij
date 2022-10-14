@@ -98,7 +98,6 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-info-android",
             "intellij-info-py",
             "intellij-info-go",
-            "intellij-info-rs",
             "intellij-info-js",
             "intellij-info-ts",
             "intellij-info-dart");
