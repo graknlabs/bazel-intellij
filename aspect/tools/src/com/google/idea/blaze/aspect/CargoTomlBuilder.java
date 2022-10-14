@@ -75,12 +75,9 @@ public class CargoTomlBuilder {
         cargoToml.set("dependencies", deps);
         if (options.pathDeps != null) {
             options.pathDeps.forEach(dep -> {
-                String[] nameAndPath = dep.split("=");
-                String name = nameAndPath[0];
-                String path = nameAndPath[1];
                 Config pathObj = Config.inMemory();
-                pathObj.set("path", path);
-                deps.set(name, pathObj);
+                pathObj.set("path", dep);
+                deps.set(dep, pathObj);
             });
         }
         if (options.externalDeps != null) {
